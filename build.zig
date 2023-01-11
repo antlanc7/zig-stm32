@@ -13,6 +13,7 @@ pub fn build(b: *std.build.Builder) void {
     };
 
     const elf = b.addExecutable("main.elf", "src/main.zig");
+    elf.emit_asm = .emit;
     elf.setTarget(target);
     elf.setBuildMode(.ReleaseSmall);
     elf.setLinkerScriptPath(.{ .path = "linker.ld" });
