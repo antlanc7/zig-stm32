@@ -30,6 +30,6 @@ pub fn build(b: *std.build.Builder) void {
         "0x8000000",
     });
     flash_cmd.step.dependOn(&bin.step);
-    const flash_step = b.step("flash", "Flash and run the app on your STM32F4Discovery");
+    const flash_step = b.step("flash", "Flash and run the app on your STM32F042K6 Nucleo");
     flash_step.dependOn(&flash_cmd.step);
 }
