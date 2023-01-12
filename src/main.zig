@@ -17,20 +17,18 @@ const GPIO_PIN3: u32 = 1 << 3; // Bit mask for GPIOB3
 fn busy_wait(count: u32) void {
     var i: u32 = 0;
     while (i < count) : (i += 1) {
-        comptime {
-            asm volatile ("");
-        }
+        asm volatile (""); // Prevent the compiler from optimizing the loop away
     }
 }
 
 export fn main() void {
     RCC_AHBENR.* |= RCC_GPIOB_EN; // Enable GPIOB clock
-    var temp: u32 = GPIOB_MODER.*; // Read the current value of the GPIOB mode register
+    var temp = GPIOB_MODER.*; // Read the current value of the GPIOB mode register
     temp &= GPIOB_PIN3_MODE_CLR; // Clear all the bits relative to PB3
     temp |= GPIOB_PIN3_MODE_OUT; // Set output pin mode
     GPIOB_MODER.* = temp; // Write the new value to the GPIOB mode register
     while (true) {
-        GPIOB_ODR.* ^= @as(u32, GPIO_PIN3); // Toggle the bit corresponding to GPIOB3
-        busy_wait(10_000_000);
+        GPIOB_ODR.* ^= GPIO_PIN3; // Toggle the bit corresponding to GPIOB3
+        busy_wait(1_000_000);
     }
 }
