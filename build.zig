@@ -19,7 +19,8 @@ pub fn build(b: *std.Build) void {
     });
     elf.emit_asm = if (asm_emit) .emit else .no_emit;
     elf.setLinkerScriptPath(.{ .path = "linker.ld" });
-    elf.install();
+    const install_elf_step = b.addInstallBinFile(elf.getOutputSource(), "main.elf");
+    b.default_step.dependOn(&install_elf_step.step);
 
     const bin_step = elf.addObjCopy(.{ .format = .bin });
     const install_bin_step = b.addInstallBinFile(bin_step.getOutputSource(), "main.bin");
