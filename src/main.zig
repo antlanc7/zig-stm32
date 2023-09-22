@@ -15,10 +15,8 @@ const GPIOB_ODR: *volatile u32 = @ptrFromInt(GPIOB_BASE + GPIO_ODR_OFFSET);
 const GPIO_PIN3 = 1 << 3; // Bit mask for GPIOB3 in the GPIO ODR register
 
 fn busy_wait(count: u32) void {
-    var i = count;
-    while (i > 0) : (i -= 1) {
-        asm volatile (""); // Prevent the compiler from optimizing the loop away
-    }
+    const p: *volatile u32 = @constCast(&count); // Prevent the compiler from optimizing the loop away
+    while (p.* > 0) : (p.* -= 1) {}
 }
 
 export fn main() void {

@@ -16,17 +16,18 @@ pub fn build(b: *std.Build) void {
     });
     elf.setLinkerScript(.{ .path = "linker.ld" });
     const install_elf_step = b.addInstallBinFile(elf.getOutputSource(), "main.elf");
-    b.default_step.dependOn(&install_elf_step.step);
 
     // add a CLI option to enable asm output: -Dasm
     const asm_emit = b.option(bool, "asm", "enable asm output") orelse false;
-    if (asm_emit) {
-        const install_asm_step = b.addInstallFile(elf.getEmittedAsm(), "main.asm");
-        install_asm_step.step.dependOn(&install_elf_step.step);
-        b.default_step.dependOn(&install_asm_step.step);
-    }
+    const install_asm_step = b.addInstallFile(elf.getEmittedAsm(), "main.s");
+    install_asm_step.step.dependOn(&install_elf_step.step);
 
     const bin_step = elf.addObjCopy(.{ .format = .bin });
+    if (asm_emit) {
+        bin_step.step.dependOn(&install_asm_step.step);
+    } else {
+        bin_step.step.dependOn(&install_elf_step.step);
+    }
     const install_bin_step = b.addInstallBinFile(bin_step.getOutputSource(), "main.bin");
     install_bin_step.step.dependOn(&bin_step.step);
     b.default_step.dependOn(&install_bin_step.step);
