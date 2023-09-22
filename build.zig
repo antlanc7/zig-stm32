@@ -8,19 +8,23 @@ pub fn build(b: *std.Build) void {
         .abi = .none,
     };
 
-    // add a CLI option to enable asm output: -Dasm
-    const asm_emit = b.option(bool, "asm", "enable asm output") orelse false;
-
     const elf = b.addExecutable(.{
         .name = "main",
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseSmall }),
     });
-    elf.emit_asm = if (asm_emit) .emit else .no_emit;
-    elf.setLinkerScriptPath(.{ .path = "linker.ld" });
+    elf.setLinkerScript(.{ .path = "linker.ld" });
     const install_elf_step = b.addInstallBinFile(elf.getOutputSource(), "main.elf");
     b.default_step.dependOn(&install_elf_step.step);
+
+    // add a CLI option to enable asm output: -Dasm
+    const asm_emit = b.option(bool, "asm", "enable asm output") orelse false;
+    if (asm_emit) {
+        const install_asm_step = b.addInstallFile(elf.getEmittedAsm(), "main.asm");
+        install_asm_step.step.dependOn(&install_elf_step.step);
+        b.default_step.dependOn(&install_asm_step.step);
+    }
 
     const bin_step = elf.addObjCopy(.{ .format = .bin });
     const install_bin_step = b.addInstallBinFile(bin_step.getOutputSource(), "main.bin");
