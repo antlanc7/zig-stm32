@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void {
 
     const elf = b.addExecutable(.{
         .name = "main",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = .{ .path = "src/startup.zig" },
         .target = target,
         .optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseSmall }),
     });
