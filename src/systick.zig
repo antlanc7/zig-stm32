@@ -25,8 +25,7 @@ const systick_t = packed struct {
 const SYSTICK: *volatile systick_t = @ptrFromInt(0xe000e010);
 
 pub fn init(reload: u24) void {
-    stm32f042.RCC.APB2ENR.SYSCFGEN = 1;
-
+    stm32f042.RCC.APB2ENR.modify(.{ .SYSCFGEN = 1 });
     SYSTICK.STK_RVR.RELOAD = reload;
     SYSTICK.STK_CVR.CURRENT = 0;
     SYSTICK.STK_CSR.CLKSOURCE = 1;
