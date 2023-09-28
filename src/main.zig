@@ -1,7 +1,25 @@
-const stm32f042 = @import("lib/STM32F042x.zig").devices.STM32F042x.peripherals;
+const stm32f042_lib = @import("lib/STM32F042x.zig");
+const stm32f042_types = stm32f042_lib.types.peripherals;
+const stm32f042 = stm32f042_lib.devices.STM32F042x.peripherals;
 const systick = @import("systick.zig");
 const std = @import("std");
 const IRC_FREQ = 8000000;
+
+fn uart_write(uart: *volatile stm32f042_types.USART, bytes: []const u8) error{}!usize {
+    for (bytes) |byte| {
+        uart.TDR.write_raw(byte);
+        while (uart.ISR.read().TC != 1) asm volatile ("");
+    }
+    return bytes.len;
+}
+
+const uart2_writer = std.io.Writer(
+    *volatile stm32f042_types.USART,
+    error{},
+    uart_write,
+){
+    .context = stm32f042.USART2,
+};
 
 pub fn main() noreturn {
     systick.init(IRC_FREQ / 1000);
@@ -32,18 +50,15 @@ pub fn main() noreturn {
     // gpio b3 output (onboard led)
     stm32f042.GPIOB.MODER.modify(.{ .MODER3 = 1 });
     var gpio_state: u1 = 0;
+    var counter: u32 = 0;
     while (true) {
         gpio_state = 1 - gpio_state;
         stm32f042.GPIOB.ODR.modify(.{ .ODR3 = gpio_state }); // set gpio out value
-        //sending "a\r\n" to uart
-        stm32f042.USART2.TDR.write_raw('a');
-        while (stm32f042.USART2.ISR.read().TC != 1) systick.delay(1);
-        stm32f042.USART2.TDR.write_raw('\r');
-        while (stm32f042.USART2.ISR.read().TC != 1) systick.delay(1);
-        stm32f042.USART2.TDR.write_raw('\n');
-        while (stm32f042.USART2.ISR.read().TC != 1) systick.delay(1);
+
+        uart2_writer.print("ciao da zig, {}\r\n", .{counter}) catch unreachable;
 
         //delay 1 sec
         systick.delay(1000);
+        counter +%= 1;
     }
 }

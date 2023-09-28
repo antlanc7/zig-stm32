@@ -19,7 +19,7 @@ pub const devices = struct {
             ///  Serial peripheral interface
             pub const SPI2 = @as(*volatile types.peripherals.SPI1, @ptrFromInt(0x40003800));
             ///  Universal synchronous asynchronous receiver transmitter
-            pub const USART2 = @as(*volatile types.peripherals.USART1, @ptrFromInt(0x40004400));
+            pub const USART2 = @as(*volatile types.peripherals.USART, @ptrFromInt(0x40004400));
             ///  Inter-integrated circuit
             pub const I2C1 = @as(*volatile types.peripherals.I2C1, @ptrFromInt(0x40005400));
             ///  Universal serial bus full-speed device interface
@@ -45,7 +45,7 @@ pub const devices = struct {
             ///  Serial peripheral interface
             pub const SPI1 = @as(*volatile types.peripherals.SPI1, @ptrFromInt(0x40013000));
             ///  Universal synchronous asynchronous receiver transmitter
-            pub const USART1 = @as(*volatile types.peripherals.USART1, @ptrFromInt(0x40013800));
+            pub const USART1 = @as(*volatile types.peripherals.USART, @ptrFromInt(0x40013800));
             ///  General-purpose-timers
             pub const TIM16 = @as(*volatile types.peripherals.TIM16, @ptrFromInt(0x40014400));
             ///  General-purpose-timers
@@ -8493,7 +8493,7 @@ pub const types = struct {
         };
 
         ///  Universal synchronous asynchronous receiver transmitter
-        pub const USART1 = extern struct {
+        pub const USART = extern struct {
             ///  Control register 1
             CR1: mmio.Mmio(packed struct(u32) {
                 ///  USART enable
