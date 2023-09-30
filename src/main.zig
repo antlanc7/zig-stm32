@@ -49,14 +49,9 @@ pub fn main() noreturn {
     });
     // gpio b3 output (onboard led)
     stm32f042.GPIOB.MODER.modify(.{ .MODER3 = 1 });
-    var gpio_state: u1 = 0;
     while (true) {
-        gpio_state = 1 - gpio_state;
         stm32f042.GPIOB.ODR.toggle(.{.ODR3}); // set gpio out value
-
         uart2_writer.print("ciao da zig, {}\r\n", .{systick.getTicks() / 1000}) catch unreachable;
-
-        //delay 1 sec
         systick.delay(1000);
     }
 }
