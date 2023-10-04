@@ -42,12 +42,15 @@ export fn sysTick_Handler() void {
 }
 
 pub fn delay(ms: u32) void {
-    const start = systick;
-    while (systick -% start < ms) {
-        asm volatile ("");
-    }
+    awaitTicks(ms + systick);
 }
 
 pub fn getTicks() u32 {
     return systick;
+}
+
+pub fn awaitTicks(ms: u32) void {
+    while (systick < ms) {
+        asm volatile ("");
+    }
 }
