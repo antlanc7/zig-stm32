@@ -6,24 +6,46 @@ const UART = *volatile stm32f042.types.peripherals.USART;
 fn uart_write(uart: UART, bytes: []const u8) error{}!usize {
     for (bytes) |byte| {
         uart.TDR.write_raw(byte);
-        while (uart.ISR.read().TC != 1) asm volatile ("");
+        while (uart.ISR.read().TC != 1) {}
     }
     return bytes.len;
 }
 
-const uart_writer = std.io.Writer(
+fn uart_read(uart: UART, bytes: []u8) error{}!usize {
+    for (bytes) |*byte| {
+        while (uart.ISR.read().RXNE != 1) {}
+        byte.* = @truncate(uart.RDR.read().RDR);
+    }
+    return bytes.len;
+}
+
+const UartWriter = std.io.GenericWriter(
     UART,
     error{},
     uart_write,
 );
 
-pub fn init(uart: UART, baudrate: u32, irc_freq: u32) uart_writer {
+const UartReader = std.io.GenericReader(
+    UART,
+    error{},
+    uart_read,
+);
+
+const Uart = struct {
+    reader: UartReader,
+    writer: UartWriter,
+};
+
+pub fn init(uart: UART, baudrate: u32, irc_freq: u32) Uart {
     uart.BRR.write_raw(irc_freq / baudrate);
     uart.CR1.modify(.{ .RE = 1, .TE = 1, .UE = 1 });
-    return .{ .context = uart };
+    return .{
+        .reader = .{ .context = uart },
+        .writer = .{ .context = uart },
+    };
 }
 
-pub fn init_vcom_uart(baudrate: u32, irc_freq: u32) uart_writer {
+pub fn init_vcom_uart(baudrate: u32, irc_freq: u32) Uart {
     const rcc = stm32f042.devices.STM32F042x.peripherals.RCC;
     const gpioa = stm32f042.devices.STM32F042x.peripherals.GPIOA;
     const usart2 = stm32f042.devices.STM32F042x.peripherals.USART2;

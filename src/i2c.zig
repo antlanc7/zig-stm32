@@ -7,11 +7,11 @@ pub fn i2c_write(i2c: I2C, address: u7, bytes: []const u8) void {
     const len: u8 = @truncate(bytes.len);
     i2c.CR2.modify(.{ .SADD1 = address, .AUTOEND = 1, .NBYTES = len, .START = 1 });
     for (bytes) |byte| {
-        while (i2c.ISR.read().TXE != 1) asm volatile ("");
+        while (i2c.ISR.read().TXE != 1) {}
         i2c.TXDR.write_raw(byte);
     }
-    // while (i2c.ISR.read().TCR != 1) asm volatile ("");
-    while (i2c.ISR.read().TXE != 1) asm volatile ("");
+    // while (i2c.ISR.read().TCR != 1) {}
+    while (i2c.ISR.read().TXE != 1) {}
     i2c.CR2.write_raw(0);
 }
 
