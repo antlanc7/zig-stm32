@@ -3,6 +3,10 @@ const stm32f042 = @import("lib/STM32F042x.zig");
 
 const UART = *volatile stm32f042.types.peripherals.USART;
 
+export fn usart1_irq_handler() void {}
+
+export fn usart2_irq_handler() void {}
+
 fn uart_write(uart: UART, bytes: []const u8) error{}!usize {
     for (bytes) |byte| {
         uart.TDR.write_raw(byte);
@@ -32,17 +36,19 @@ const UartReader = std.io.GenericReader(
 );
 
 const Uart = struct {
-    reader: UartReader,
-    writer: UartWriter,
+    regs: UART,
+    pub fn reader(self: Uart) UartReader {
+        return .{ .context = self.regs };
+    }
+    pub fn writer(self: Uart) UartWriter {
+        return .{ .context = self.regs };
+    }
 };
 
 pub fn init(uart: UART, baudrate: u32, irc_freq: u32) Uart {
     uart.BRR.write_raw(irc_freq / baudrate);
     uart.CR1.modify(.{ .RE = 1, .TE = 1, .UE = 1 });
-    return .{
-        .reader = .{ .context = uart },
-        .writer = .{ .context = uart },
-    };
+    return .{ .regs = uart };
 }
 
 pub fn init_vcom_uart(baudrate: u32, irc_freq: u32) Uart {

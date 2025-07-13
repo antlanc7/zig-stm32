@@ -41,11 +41,13 @@ pub fn build(b: *std.Build) void {
     options.addOption(bool, "use_lcd", use_lcd);
     elf.root_module.addOptions("config", options);
 
+    const bin_path = b.getInstallPath(install_bin_step.dir, install_bin_step.dest_rel_path);
+
     const flash_cmd = b.addSystemCommand(&.{
         "st-flash",
         "--reset",
         "write",
-        b.getInstallPath(install_bin_step.dir, install_bin_step.dest_rel_path),
+        bin_path,
         "0x8000000",
     });
     flash_cmd.step.dependOn(&install_bin_step.step);

@@ -6857,29 +6857,29 @@ pub const types = struct {
         ///  Nested Vectored Interrupt Controller
         pub const NVIC = extern struct {
             ///  Interrupt Set Enable Register
-            ISER: mmio.Mmio(packed struct(u32) {
+            ISER: [16]mmio.Mmio(packed struct(u32) {
                 ///  SETENA
                 SETENA: u32,
             }),
-            reserved128: [124]u8,
+            reserved128: [64]u8,
             ///  Interrupt Clear Enable Register
-            ICER: mmio.Mmio(packed struct(u32) {
+            ICER: [16]mmio.Mmio(packed struct(u32) {
                 ///  CLRENA
                 CLRENA: u32,
             }),
-            reserved256: [124]u8,
+            reserved256: [64]u8,
             ///  Interrupt Set-Pending Register
-            ISPR: mmio.Mmio(packed struct(u32) {
+            ISPR: [16]mmio.Mmio(packed struct(u32) {
                 ///  SETPEND
                 SETPEND: u32,
             }),
-            reserved384: [124]u8,
+            reserved384: [64]u8,
             ///  Interrupt Clear-Pending Register
-            ICPR: mmio.Mmio(packed struct(u32) {
+            ICPR: [16]mmio.Mmio(packed struct(u32) {
                 ///  CLRPEND
                 CLRPEND: u32,
             }),
-            reserved768: [380]u8,
+            reserved768: [320]u8,
             ///  Interrupt Priority Register 0
             IPR0: mmio.Mmio(packed struct(u32) {
                 reserved6: u6,

@@ -7,12 +7,18 @@ ENTRY(_start);
 __reset_stack_pointer = ORIGIN(RAM) + LENGTH(RAM);
 SECTIONS {
     .text : {
+        _base = .;
         LONG(__reset_stack_pointer);
         LONG(_start | 1);
-        . += 52;
+        . = _base + 12;
+        LONG(hardFault_Handler);
+        . = _base + 60;
         LONG(sysTick_Handler);
+        . = _base + 172;
+        LONG(usart1_irq_handler);
+        LONG(usart2_irq_handler);
         /* The whole interrupt table is 332 bytes long. Advance to that position. */
-        . += 332 - 56;
+        . = _base + 332;
         /* And here comes the rest of the code, ie. all symbols starting with .text */
         *(.text)
         *(.rodata*)
