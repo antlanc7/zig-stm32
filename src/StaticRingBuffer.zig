@@ -1,3 +1,9 @@
+// MIT License antlanc7 2025
+// Stolen from std.RingBuffer
+// but changed to be static allocated (with comptime size embedded array) instead of dynamic using allocator,
+// and generic child type instead of u8 (even if we will use it for u8 anyway)
+// the methods have not been changed except for using T instead of u8 in signatures
+
 const assert = @import("std").debug.assert;
 const copyForwards = @import("std").mem.copyForwards;
 
