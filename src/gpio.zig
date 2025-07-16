@@ -1,30 +1,25 @@
 const std = @import("std");
-const stm32f042 = @import("lib/STM32F042x.zig");
+const microzig = @import("microzig");
+const chip = microzig.chip;
 
-const GPIO = *volatile stm32f042.types.peripherals.GPIO;
+const GPIO = *volatile chip.types.peripherals.gpio_v2.GPIO;
 
 pub fn init_output_mode(comptime gpio: GPIO, comptime pin: u4) void {
-    const rcc = stm32f042.devices.STM32F042x.peripherals.RCC;
-    const gpioa = stm32f042.devices.STM32F042x.peripherals.GPIOA;
-    const gpiob = stm32f042.devices.STM32F042x.peripherals.GPIOB;
-    const gpioc = stm32f042.devices.STM32F042x.peripherals.GPIOC;
-    const gpiof = stm32f042.devices.STM32F042x.peripherals.GPIOF;
-    var rccahbenr = rcc.AHBENR.read();
-    @field(rccahbenr, "IOP" ++ switch (gpio) {
-        gpioa => "A",
-        gpiob => "B",
-        gpioc => "C",
-        gpiof => "F",
+    const rcc = chip.peripherals.RCC;
+    const gpioa = chip.peripherals.GPIOA;
+    const gpiob = chip.peripherals.GPIOB;
+    const gpioc = chip.peripherals.GPIOC;
+    const gpiof = chip.peripherals.GPIOF;
+    rcc.AHBENR.modify_one(switch (gpio) {
+        gpioa => "GPIOAEN",
+        gpiob => "GPIOBEN",
+        gpioc => "GPIOCEN",
+        gpiof => "GPIOFEN",
         else => unreachable,
-    } ++ "EN") = 1;
-    rcc.AHBENR.write(rccahbenr);
-    var moder = gpio.MODER.read();
-    @field(moder, std.fmt.comptimePrint("MODER{}", .{pin})) = 1;
-    gpio.MODER.write(moder);
+    }, 1);
+    gpio.MODER.modify_one(std.fmt.comptimePrint("MODER[{}]", .{pin}), .Output);
 }
 
 pub fn toggle(comptime gpio: GPIO, comptime pin: u4) void {
-    var odr = gpio.ODR.read();
-    @field(odr, std.fmt.comptimePrint("ODR{}", .{pin})) ^= 1;
-    gpio.ODR.write(odr);
+    gpio.ODR.raw ^= 1 << pin;
 }

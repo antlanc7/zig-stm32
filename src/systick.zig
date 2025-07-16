@@ -1,56 +1,34 @@
-const stm32f042 = @import("lib/STM32F042x.zig").devices.STM32F042x.peripherals;
-const mmio = @import("lib/mmio.zig");
-
-const systick_t = extern struct {
-    STK_CSR: mmio.Mmio(packed struct(u32) {
-        ENABLE: u1,
-        TICKINT: u1,
-        CLKSOURCE: u1,
-        padding: u13,
-        COUNTFLAG: u1,
-        padding2: u15,
-    }),
-    STK_RVR: mmio.Mmio(packed struct(u32) {
-        RELOAD: u24,
-        padding: u8,
-    }),
-    STK_CVR: mmio.Mmio(packed struct(u32) {
-        CURRENT: u24,
-        padding: u8,
-    }),
-    STK_CALIB: mmio.Mmio(packed struct(u32) {
-        TENMS: u24,
-        padding: u8,
-    }),
-};
-const SYSTICK: *volatile systick_t = @ptrFromInt(0xe000e010);
+const microzig = @import("microzig");
+const rcc = microzig.chip.peripherals.RCC;
+const systick = microzig.cpu.peripherals.systick;
 
 pub fn init(reload: u24) void {
-    stm32f042.RCC.APB2ENR.modify(.{ .SYSCFGEN = 1 });
-    SYSTICK.STK_RVR.modify(.{ .RELOAD = reload });
-    SYSTICK.STK_CVR.write_raw(0);
-    SYSTICK.STK_CSR.modify(.{
-        .CLKSOURCE = 1,
-        .TICKINT = 1,
-        .ENABLE = 1,
+    rcc.APB2ENR.modify(.{ .SYSCFGEN = @intFromBool(true) });
+    systick.LOAD.modify(.{ .RELOAD = reload });
+    systick.VAL.write_raw(0);
+    systick.CTRL.modify(.{
+        .ENABLE = @intFromBool(true),
+        .TICKINT = @intFromBool(true),
+        .CLKSOURCE = @intFromBool(true),
     });
 }
 
-var systick: u32 = 0;
-export fn sysTick_Handler() void {
-    systick +%= 1;
+var systick_counter: u32 = 0;
+
+pub fn sysTick_Handler() callconv(.C) void {
+    systick_counter +%= 1;
 }
 
 pub fn delay(ms: u32) void {
-    awaitTicks(ms + systick);
+    awaitTicks(ms + systick_counter);
 }
 
 pub fn getTicks() u32 {
-    return systick;
+    return systick_counter;
 }
 
 pub fn awaitTicks(ms: u32) void {
-    while (systick < ms) {
-        asm volatile ("");
+    while (systick_counter < ms) {
+        asm volatile ("" ::: "memory");
     }
 }
