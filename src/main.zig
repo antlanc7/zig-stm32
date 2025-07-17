@@ -7,7 +7,17 @@ const cpu = microzig.cpu;
 const systick = @import("systick.zig");
 const gpio = @import("gpio.zig");
 
+fn hardFault_Handler() callconv(.C) void {
+    while (true) {
+        gpio.toggle(chip.peripherals.GPIOB, 3);
+        for (0..100000) |i| {
+            std.mem.doNotOptimizeAway(&i);
+        }
+    }
+}
+
 pub const microzig_options = microzig.Options{ .interrupts = .{
+    .HardFault = .{ .c = hardFault_Handler },
     .SysTick = .{ .c = systick.sysTick_Handler },
 } };
 
