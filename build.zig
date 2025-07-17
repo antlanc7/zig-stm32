@@ -18,4 +18,9 @@ pub fn build(b: *std.Build) void {
 
     mb.install_firmware(firmware, .{}); // .format = .elf
     mb.install_firmware(firmware, .{ .format = .bin });
+
+    const use_lcd = b.option(bool, "lcd", "Use LCD display HD44780 with I2C") orelse false;
+    const options = b.addOptions();
+    options.addOption(bool, "use_lcd", use_lcd);
+    firmware.app_mod.addOptions("config", options);
 }
