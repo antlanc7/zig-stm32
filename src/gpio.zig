@@ -4,22 +4,22 @@ const chip = microzig.chip;
 
 const GPIO = *volatile chip.types.peripherals.gpio_v2.GPIO;
 
-pub fn init_output_mode(comptime gpio: GPIO, comptime pin: u4) void {
-    const rcc = chip.peripherals.RCC;
-    const gpioa = chip.peripherals.GPIOA;
-    const gpiob = chip.peripherals.GPIOB;
-    const gpioc = chip.peripherals.GPIOC;
-    const gpiof = chip.peripherals.GPIOF;
-    rcc.AHBENR.modify_one(switch (gpio) {
-        gpioa => "GPIOAEN",
-        gpiob => "GPIOBEN",
-        gpioc => "GPIOCEN",
-        gpiof => "GPIOFEN",
+const Gpio = @This();
+
+gpio: GPIO,
+pin: u4,
+
+pub fn init_output_mode(comptime self: Gpio) void {
+    chip.peripherals.RCC.AHBENR.modify_one(switch (self.gpio) {
+        chip.peripherals.GPIOA => "GPIOAEN",
+        chip.peripherals.GPIOB => "GPIOBEN",
+        chip.peripherals.GPIOC => "GPIOCEN",
+        chip.peripherals.GPIOF => "GPIOFEN",
         else => unreachable,
     }, 1);
-    gpio.MODER.modify_one(std.fmt.comptimePrint("MODER[{}]", .{pin}), .Output);
+    self.gpio.MODER.modify_one(std.fmt.comptimePrint("MODER[{}]", .{self.pin}), .Output);
 }
 
-pub fn toggle(comptime gpio: GPIO, comptime pin: u4) void {
-    gpio.ODR.raw ^= 1 << pin;
+pub fn toggle(comptime self: Gpio) void {
+    self.gpio.ODR.raw ^= 1 << self.pin;
 }

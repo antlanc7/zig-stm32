@@ -6,14 +6,16 @@ const chip = microzig.chip;
 const cpu = microzig.cpu;
 
 const systick = @import("systick.zig");
-const gpio = @import("gpio.zig");
+const Gpio = @import("gpio.zig");
 const uart = @import("uart.zig");
 const i2c = @import("i2c.zig");
 const lcd_lib = @import("lcd_i2c.zig");
 
+const led: Gpio = .{ .gpio = chip.peripherals.GPIOB, .pin = 3 };
+
 fn hardFault_Handler() callconv(.C) void {
     while (true) {
-        gpio.toggle(chip.peripherals.GPIOB, 3);
+        led.toggle();
         for (0..100000) |i| {
             std.mem.doNotOptimizeAway(&i);
         }
@@ -31,7 +33,7 @@ const IRC_FREQ = 8000000;
 
 pub fn main() !void {
     systick.init(IRC_FREQ / 1000);
-    gpio.init_output_mode(chip.peripherals.GPIOB, 3);
+    led.init_output_mode();
     const uart_vcom = uart.init_vcom_uart(115200, IRC_FREQ);
     const uart_vcom_reader = uart_vcom.reader();
     const uart_vcom_writer = uart_vcom.writer();
@@ -45,7 +47,7 @@ pub fn main() !void {
     const lcd_writer = if (config.use_lcd) lcd.writer() else {};
 
     while (true) {
-        gpio.toggle(chip.peripherals.GPIOB, 3);
+        led.toggle();
         uart_vcom_writer.print("zig ms: {}\n", .{systick.getTicks() / 1000}) catch unreachable;
         if (config.use_lcd) {
             lcd.put_cur(0, 0);
