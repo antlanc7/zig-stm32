@@ -10,8 +10,8 @@ const UART = *volatile chip.types.peripherals.usart_v3.USART;
 const UART1 = chip.peripherals.USART1;
 const UART2 = chip.peripherals.USART2;
 
-const TransmitError = std.RingBuffer.Error;
-const ReceiveError = std.RingBuffer.Error;
+const TransmitError = anyerror;
+const ReceiveError = anyerror;
 
 var uart1: ?Uart = null;
 var uart2: ?Uart = null;
@@ -38,11 +38,11 @@ fn usart_irq_handler(uart: *Uart) void {
     }
 }
 
-pub fn usart1_irq_handler() callconv(.C) void {
+pub fn usart1_irq_handler() callconv(.c) void {
     usart_irq_handler(&(uart1 orelse return));
 }
 
-pub fn usart2_irq_handler() callconv(.C) void {
+pub fn usart2_irq_handler() callconv(.c) void {
     usart_irq_handler(&(uart2 orelse return));
 }
 

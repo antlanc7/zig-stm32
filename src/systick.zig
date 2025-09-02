@@ -15,7 +15,7 @@ pub fn init(reload: u24) void {
 
 var systick_counter: u32 = 0;
 
-pub fn sysTick_Handler() callconv(.C) void {
+pub fn sysTick_Handler() callconv(.c) void {
     systick_counter +%= 1;
 }
 
@@ -29,6 +29,6 @@ pub fn getTicks() u32 {
 
 pub fn awaitTicks(ms: u32) void {
     while (systick_counter < ms) {
-        asm volatile ("" ::: "memory");
+        asm volatile ("" ::: .{ .memory = true });
     }
 }
