@@ -14,6 +14,7 @@ pub fn build(b: *std.Build) void {
         .target = mb.ports.stm32.chips.STM32F042K6,
         .optimize = .ReleaseSmall,
         .root_source_file = b.path("src/main.zig"),
+        .strip = true,
     });
 
     mb.install_firmware(firmware, .{}); // .format = .elf

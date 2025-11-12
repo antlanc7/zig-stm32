@@ -10,6 +10,7 @@ const Gpio = @import("gpio.zig");
 const uart = @import("uart.zig");
 const i2c = @import("i2c.zig");
 const lcd_lib = @import("lcd_i2c.zig");
+const adc_lib = @import("adc.zig");
 
 const led: Gpio = .{ .gpio = chip.peripherals.GPIOB, .pin = 3 };
 
@@ -46,12 +47,15 @@ pub fn main() !void {
     }
     const lcd_writer = if (config.use_lcd) lcd.writer() else {};
 
+    const adc = adc_lib.init_adc1();
+
     while (true) {
         led.toggle();
-        uart_vcom_writer.print("zig ms: {}\n", .{systick.getTicks() / 1000}) catch unreachable;
+        const adc_val = adc.read();
+        uart_vcom_writer.print("zig ms: {} - {}\n", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
         if (config.use_lcd) {
             lcd.put_cur(0, 0);
-            lcd_writer.print("zig ms: {}", .{systick.getTicks() / 1000}) catch unreachable;
+            lcd_writer.print("zig {}-{}", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
         }
         var buf = std.BoundedArray(u8, 1024){};
         uart_vcom_reader.streamUntilDelimiter(buf.writer(), '\n', buf.capacity()) catch {};
