@@ -17,6 +17,8 @@ pub fn build(b: *std.Build) void {
         .strip = true,
     });
 
+    firmware.artifact.setLinkerScript(b.path("src/linker.ld"));
+
     mb.install_firmware(firmware, .{}); // .format = .elf
     mb.install_firmware(firmware, .{ .format = .bin });
 
