@@ -19,7 +19,7 @@ pub fn build(b: *std.Build) void {
 
     firmware.artifact.setLinkerScript(b.path("src/linker.ld"));
 
-    mb.install_firmware(firmware, .{}); // .format = .elf
+    mb.install_firmware(firmware, .{ .format = .elf });
     mb.install_firmware(firmware, .{ .format = .bin });
 
     const use_lcd = b.option(bool, "lcd", "Use LCD display HD44780 with I2C") orelse false;
