@@ -1,20 +1,18 @@
 const std = @import("std");
 const config = @import("config");
 
-const microzig = @import("microzig");
-const chip = microzig.chip;
-const cpu = microzig.cpu;
+const chip = @import("lib/STM32F042x.zig");
 
 const systick = @import("systick.zig");
 const Gpio = @import("gpio.zig");
 const uart = @import("uart.zig");
 const i2c = @import("i2c.zig");
-const lcd_lib = @import("lcd_i2c.zig");
-const adc_lib = @import("adc.zig");
+const LCD = @import("lcd_i2c.zig");
+const adc = @import("adc.zig");
 
 const led: Gpio = .{ .gpio = chip.peripherals.GPIOB, .pin = 3 };
 
-fn hardFault_Handler() callconv(.c) void {
+export fn hardFault_Handler() callconv(.c) noreturn {
     while (true) {
         led.toggle();
         for (0..100000) |i| {
@@ -23,51 +21,60 @@ fn hardFault_Handler() callconv(.c) void {
     }
 }
 
-pub const microzig_options = microzig.Options{ .interrupts = .{
-    .HardFault = .{ .c = hardFault_Handler },
-    .SysTick = .{ .c = systick.sysTick_Handler },
-    .USART1 = .{ .c = uart.usart1_irq_handler },
-    .USART2 = .{ .c = uart.usart2_irq_handler },
-} };
+export const sysTick_Handler = systick.sysTick_Handler;
+export const usart1_irq_handler = uart.usart1_irq_handler;
+export const usart2_irq_handler = uart.usart2_irq_handler;
 
 const IRC_FREQ = 8000000;
 
 pub fn main() !void {
     systick.init(IRC_FREQ / 1000);
     led.init_output_mode();
-    const uart_vcom = uart.init_vcom_uart(115200, IRC_FREQ);
-    var uart_vcom_reader_buffer: [1024]u8 = undefined;
-    var uart_vcom_writer_buffer: [1024]u8 = undefined;
+    var uart_vcom = uart.init_vcom_uart(115200, IRC_FREQ);
+    uart_vcom.registerUartInterrupt();
+    var uart_vcom_reader_buffer: [512]u8 = undefined;
+    var uart_vcom_writer_buffer: [512]u8 = undefined;
     var uart_vcom_reader = uart_vcom.reader(&uart_vcom_reader_buffer);
     var uart_vcom_writer = uart_vcom.writer(&uart_vcom_writer_buffer);
 
-    var lcd: lcd_lib.LCD = undefined;
+    var lcd_handle: LCD = undefined;
     if (config.use_lcd) {
         const i2c_handle = i2c.init_i2c1_pa9_pa10(400000, IRC_FREQ);
-        lcd = .{ .i2c = .{ .i2c = i2c_handle, .address = 0x27 } };
-        lcd.init();
+        lcd_handle = .{ .i2c = .{ .i2c = i2c_handle, .address = 0x27 } };
+        lcd_handle.init();
     }
-    const lcd_writer = if (config.use_lcd) lcd.writer() else {};
+    const lcd_writer = if (config.use_lcd) lcd_handle.writer() else {};
 
-    const adc = adc_lib.init_adc1();
+    const adc1 = adc.init_adc1();
 
     while (true) {
         led.toggle();
-        const adc_val = adc.read();
+        const adc_val = adc1.read();
         uart_vcom_writer.interface.print("zig 0.15 ms: {} - {}\n", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
         if (config.use_lcd) {
-            lcd.put_cur(0, 0);
+            lcd_handle.put_cur(0, 0);
             lcd_writer.print("zig {}-{}", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
         }
-        const received = uart_vcom_reader.interface.takeDelimiterExclusive('\n') catch unreachable;
+        const receivedBeforeTrim = uart_vcom_reader.interface.takeDelimiterInclusive('\n') catch |err| switch (err) {
+            error.ReadFailed => switch (uart_vcom_reader.err.?) {
+                error.NoDataAvailable => (&.{}),
+            },
+            error.StreamTooLong => "StreamTooLong",
+            error.EndOfStream => unreachable,
+        };
+        const received = std.mem.trim(u8, receivedBeforeTrim, &std.ascii.whitespace);
         if (received.len > 0) {
             uart_vcom_writer.interface.print("received: {s} = {any}\r\n", .{ received, received }) catch unreachable;
             if (config.use_lcd) {
-                lcd.put_cur(1, 0);
+                lcd_handle.put_cur(1, 0);
                 lcd_writer.print("R: {s}", .{received}) catch unreachable;
             }
         }
-        uart_vcom_writer.interface.flush() catch hardFault_Handler();
+        uart_vcom_writer.interface.flush() catch {
+            uart_vcom_writer.interface.end = 0; // clear the buffer
+            uart_vcom_writer.interface.writeAll("uart write failed\r\n") catch unreachable;
+            uart_vcom_writer.interface.flush() catch unreachable;
+        };
         systick.delay(1000);
     }
 }

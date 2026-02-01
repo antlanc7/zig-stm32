@@ -1,79 +1,74 @@
 const mmio = @import("mmio.zig");
 
-pub const devices = struct {
-    ///  STM32F042x
-    pub const STM32F042x = struct {
-        pub const peripherals = struct {
-            ///  General-purpose-timers
-            pub const TIM2 = @as(*volatile types.peripherals.TIM2, @ptrFromInt(0x40000000));
-            ///  General-purpose-timers
-            pub const TIM3 = @as(*volatile types.peripherals.TIM2, @ptrFromInt(0x40000400));
-            ///  General-purpose-timers
-            pub const TIM14 = @as(*volatile types.peripherals.TIM14, @ptrFromInt(0x40002000));
-            ///  Real-time clock
-            pub const RTC = @as(*volatile types.peripherals.RTC, @ptrFromInt(0x40002800));
-            ///  Window watchdog
-            pub const WWDG = @as(*volatile types.peripherals.WWDG, @ptrFromInt(0x40002c00));
-            ///  Independent watchdog
-            pub const IWDG = @as(*volatile types.peripherals.IWDG, @ptrFromInt(0x40003000));
-            ///  Serial peripheral interface
-            pub const SPI2 = @as(*volatile types.peripherals.SPI1, @ptrFromInt(0x40003800));
-            ///  Universal synchronous asynchronous receiver transmitter
-            pub const USART2 = @as(*volatile types.peripherals.USART, @ptrFromInt(0x40004400));
-            ///  Inter-integrated circuit
-            pub const I2C1 = @as(*volatile types.peripherals.I2C1, @ptrFromInt(0x40005400));
-            ///  Universal serial bus full-speed device interface
-            pub const USB = @as(*volatile types.peripherals.USB, @ptrFromInt(0x40005c00));
-            ///  Controller area network
-            pub const CAN = @as(*volatile types.peripherals.CAN, @ptrFromInt(0x40006400));
-            ///  Clock recovery system
-            pub const CRS = @as(*volatile types.peripherals.CRS, @ptrFromInt(0x40006c00));
-            ///  Power control
-            pub const PWR = @as(*volatile types.peripherals.PWR, @ptrFromInt(0x40007000));
-            ///  HDMI-CEC controller
-            pub const CEC = @as(*volatile types.peripherals.CEC, @ptrFromInt(0x40007800));
-            ///  System configuration controller
-            pub const SYSCFG = @as(*volatile types.peripherals.SYSCFG, @ptrFromInt(0x40010000));
-            ///  Comparator
-            pub const COMP = @as(*volatile types.peripherals.COMP, @ptrFromInt(0x4001001c));
-            ///  External interrupt/event controller
-            pub const EXTI = @as(*volatile types.peripherals.EXTI, @ptrFromInt(0x40010400));
-            ///  Analog-to-digital converter
-            pub const ADC = @as(*volatile types.peripherals.ADC, @ptrFromInt(0x40012400));
-            ///  Advanced-timers
-            pub const TIM1 = @as(*volatile types.peripherals.TIM1, @ptrFromInt(0x40012c00));
-            ///  Serial peripheral interface
-            pub const SPI1 = @as(*volatile types.peripherals.SPI1, @ptrFromInt(0x40013000));
-            ///  Universal synchronous asynchronous receiver transmitter
-            pub const USART1 = @as(*volatile types.peripherals.USART, @ptrFromInt(0x40013800));
-            ///  General-purpose-timers
-            pub const TIM16 = @as(*volatile types.peripherals.TIM16, @ptrFromInt(0x40014400));
-            ///  General-purpose-timers
-            pub const TIM17 = @as(*volatile types.peripherals.TIM16, @ptrFromInt(0x40014800));
-            ///  Debug support
-            pub const DBGMCU = @as(*volatile types.peripherals.DBGMCU, @ptrFromInt(0x40015800));
-            ///  DMA controller
-            pub const DMA = @as(*volatile types.peripherals.DMA, @ptrFromInt(0x40020000));
-            ///  Reset and clock control
-            pub const RCC = @as(*volatile types.peripherals.RCC, @ptrFromInt(0x40021000));
-            ///  Flash
-            pub const Flash = @as(*volatile types.peripherals.Flash, @ptrFromInt(0x40022000));
-            ///  cyclic redundancy check calculation unit
-            pub const CRC = @as(*volatile types.peripherals.CRC, @ptrFromInt(0x40023000));
-            ///  Touch sensing controller
-            pub const TSC = @as(*volatile types.peripherals.TSC, @ptrFromInt(0x40024000));
-            ///  General-purpose I/Os
-            pub const GPIOA = @as(*volatile types.peripherals.GPIO, @ptrFromInt(0x48000000));
-            ///  General-purpose I/Os
-            pub const GPIOB = @as(*volatile types.peripherals.GPIO, @ptrFromInt(0x48000400));
-            ///  General-purpose I/Os
-            pub const GPIOC = @as(*volatile types.peripherals.GPIO, @ptrFromInt(0x48000800));
-            ///  General-purpose I/Os
-            pub const GPIOF = @as(*volatile types.peripherals.GPIO, @ptrFromInt(0x48001400));
-            ///  Nested Vectored Interrupt Controller
-            pub const NVIC = @as(*volatile types.peripherals.NVIC, @ptrFromInt(0xe000e100));
-        };
-    };
+pub const peripherals = struct {
+    ///  General-purpose-timers
+    pub const TIM2 = @as(*volatile types.peripherals.TIM2, @ptrFromInt(0x40000000));
+    ///  General-purpose-timers
+    pub const TIM3 = @as(*volatile types.peripherals.TIM2, @ptrFromInt(0x40000400));
+    ///  General-purpose-timers
+    pub const TIM14 = @as(*volatile types.peripherals.TIM14, @ptrFromInt(0x40002000));
+    ///  Real-time clock
+    pub const RTC = @as(*volatile types.peripherals.RTC, @ptrFromInt(0x40002800));
+    ///  Window watchdog
+    pub const WWDG = @as(*volatile types.peripherals.WWDG, @ptrFromInt(0x40002c00));
+    ///  Independent watchdog
+    pub const IWDG = @as(*volatile types.peripherals.IWDG, @ptrFromInt(0x40003000));
+    ///  Serial peripheral interface
+    pub const SPI2 = @as(*volatile types.peripherals.SPI1, @ptrFromInt(0x40003800));
+    ///  Universal synchronous asynchronous receiver transmitter
+    pub const USART2 = @as(*volatile types.peripherals.USART, @ptrFromInt(0x40004400));
+    ///  Inter-integrated circuit
+    pub const I2C1 = @as(*volatile types.peripherals.I2C1, @ptrFromInt(0x40005400));
+    ///  Universal serial bus full-speed device interface
+    pub const USB = @as(*volatile types.peripherals.USB, @ptrFromInt(0x40005c00));
+    ///  Controller area network
+    pub const CAN = @as(*volatile types.peripherals.CAN, @ptrFromInt(0x40006400));
+    ///  Clock recovery system
+    pub const CRS = @as(*volatile types.peripherals.CRS, @ptrFromInt(0x40006c00));
+    ///  Power control
+    pub const PWR = @as(*volatile types.peripherals.PWR, @ptrFromInt(0x40007000));
+    ///  HDMI-CEC controller
+    pub const CEC = @as(*volatile types.peripherals.CEC, @ptrFromInt(0x40007800));
+    ///  System configuration controller
+    pub const SYSCFG = @as(*volatile types.peripherals.SYSCFG, @ptrFromInt(0x40010000));
+    ///  Comparator
+    pub const COMP = @as(*volatile types.peripherals.COMP, @ptrFromInt(0x4001001c));
+    ///  External interrupt/event controller
+    pub const EXTI = @as(*volatile types.peripherals.EXTI, @ptrFromInt(0x40010400));
+    ///  Analog-to-digital converter
+    pub const ADC = @as(*volatile types.peripherals.ADC, @ptrFromInt(0x40012400));
+    ///  Advanced-timers
+    pub const TIM1 = @as(*volatile types.peripherals.TIM1, @ptrFromInt(0x40012c00));
+    ///  Serial peripheral interface
+    pub const SPI1 = @as(*volatile types.peripherals.SPI1, @ptrFromInt(0x40013000));
+    ///  Universal synchronous asynchronous receiver transmitter
+    pub const USART1 = @as(*volatile types.peripherals.USART, @ptrFromInt(0x40013800));
+    ///  General-purpose-timers
+    pub const TIM16 = @as(*volatile types.peripherals.TIM16, @ptrFromInt(0x40014400));
+    ///  General-purpose-timers
+    pub const TIM17 = @as(*volatile types.peripherals.TIM16, @ptrFromInt(0x40014800));
+    ///  Debug support
+    pub const DBGMCU = @as(*volatile types.peripherals.DBGMCU, @ptrFromInt(0x40015800));
+    ///  DMA controller
+    pub const DMA = @as(*volatile types.peripherals.DMA, @ptrFromInt(0x40020000));
+    ///  Reset and clock control
+    pub const RCC = @as(*volatile types.peripherals.RCC, @ptrFromInt(0x40021000));
+    ///  Flash
+    pub const Flash = @as(*volatile types.peripherals.Flash, @ptrFromInt(0x40022000));
+    ///  cyclic redundancy check calculation unit
+    pub const CRC = @as(*volatile types.peripherals.CRC, @ptrFromInt(0x40023000));
+    ///  Touch sensing controller
+    pub const TSC = @as(*volatile types.peripherals.TSC, @ptrFromInt(0x40024000));
+    ///  General-purpose I/Os
+    pub const GPIOA = @as(*volatile types.peripherals.GPIO, @ptrFromInt(0x48000000));
+    ///  General-purpose I/Os
+    pub const GPIOB = @as(*volatile types.peripherals.GPIO, @ptrFromInt(0x48000400));
+    ///  General-purpose I/Os
+    pub const GPIOC = @as(*volatile types.peripherals.GPIO, @ptrFromInt(0x48000800));
+    ///  General-purpose I/Os
+    pub const GPIOF = @as(*volatile types.peripherals.GPIO, @ptrFromInt(0x48001400));
+    ///  Nested Vectored Interrupt Controller
+    pub const NVIC = @as(*volatile types.peripherals.NVIC, @ptrFromInt(0xe000e100));
 };
 
 pub const types = struct {

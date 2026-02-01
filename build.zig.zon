@@ -2,13 +2,7 @@
     .name = .zig_stm32,
     .version = "0.0.1",
     .fingerprint = 0xd975ef2b0aeb2afb,
-    .minimum_zig_version = "0.15.1",
-    .dependencies = .{
-        .microzig = .{
-            .url = "git+https://github.com/ZigEmbeddedGroup/microzig#ec5cf62bc2adb691a8fcb48c7bd1f1d51dc1cd9d",
-            .hash = "microzig-0.15.0-D20YSe6U3QDepekfpFlELV-MnJSjiW8A0iRZG_zQCNjP",
-        },
-    },
+    .minimum_zig_version = "0.16.0-dev.2368",
     .paths = .{
         "build.zig",
         "build.zig.zon",

@@ -15,6 +15,6 @@ export fn _start() noreturn {
     const bss = @as([*]u8, @ptrCast(&_bss))[0..bss_size];
     @memset(bss, 0);
 
-    main();
+    main() catch {};
     unreachable;
 }

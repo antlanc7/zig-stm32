@@ -1,15 +1,40 @@
-const microzig = @import("microzig");
-const rcc = microzig.chip.peripherals.RCC;
-const systick = microzig.cpu.peripherals.systick;
+const stm32 = @import("./lib/STM32F042x.zig");
+const mmio = @import("lib/mmio.zig");
+
+const systick_t = extern struct {
+    CTRL: mmio.Mmio(packed struct(u32) {
+        ENABLE: u1,
+        TICKINT: u1,
+        CLKSOURCE: u1,
+        padding: u13,
+        COUNTFLAG: u1,
+        padding2: u15,
+    }),
+    LOAD: mmio.Mmio(packed struct(u32) {
+        RELOAD: u24,
+        padding: u8,
+    }),
+    VAL: mmio.Mmio(packed struct(u32) {
+        CURRENT: u24,
+        padding: u8,
+    }),
+    STK_CALIB: mmio.Mmio(packed struct(u32) {
+        TENMS: u24,
+        padding: u8,
+    }),
+};
+const systick: *volatile systick_t = @ptrFromInt(0xe000e010);
+
+const rcc = stm32.peripherals.RCC;
 
 pub fn init(reload: u24) void {
-    rcc.APB2ENR.modify(.{ .SYSCFGEN = @intFromBool(true) });
+    rcc.APB2ENR.modify(.{ .SYSCFGEN = 1 });
     systick.LOAD.modify(.{ .RELOAD = reload });
     systick.VAL.write_raw(0);
     systick.CTRL.modify(.{
-        .ENABLE = @intFromBool(true),
-        .TICKINT = @intFromBool(true),
-        .CLKSOURCE = @intFromBool(true),
+        .ENABLE = 1,
+        .TICKINT = 1,
+        .CLKSOURCE = 1,
     });
 }
 
