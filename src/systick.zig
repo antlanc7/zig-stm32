@@ -1,30 +1,7 @@
 const stm32 = @import("./lib/STM32F042x.zig");
 const mmio = @import("lib/mmio.zig");
 
-const systick_t = extern struct {
-    CTRL: mmio.Mmio(packed struct(u32) {
-        ENABLE: u1,
-        TICKINT: u1,
-        CLKSOURCE: u1,
-        padding: u13,
-        COUNTFLAG: u1,
-        padding2: u15,
-    }),
-    LOAD: mmio.Mmio(packed struct(u32) {
-        RELOAD: u24,
-        padding: u8,
-    }),
-    VAL: mmio.Mmio(packed struct(u32) {
-        CURRENT: u24,
-        padding: u8,
-    }),
-    STK_CALIB: mmio.Mmio(packed struct(u32) {
-        TENMS: u24,
-        padding: u8,
-    }),
-};
-const systick: *volatile systick_t = @ptrFromInt(0xe000e010);
-
+const systick = stm32.peripherals.SYSTICK;
 const rcc = stm32.peripherals.RCC;
 
 pub fn init(reload: u24) void {

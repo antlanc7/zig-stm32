@@ -169,8 +169,8 @@ pub fn init_vcom_uart(baudrate: u32, irc_freq: u32) Uart {
     rcc.AHBENR.modify(.{ .IOPAEN = 1 });
     // pin 2 and 15 mode alternate function
     gpioa.MODER.modify(.{
-        .MODER2 = @intFromEnum(GPIO.Mode.Alternate),
-        .MODER15 = @intFromEnum(GPIO.Mode.Alternate),
+        .MODER2 = @intFromEnum(GPIO.Mode.alternate),
+        .MODER15 = @intFromEnum(GPIO.Mode.alternate),
     });
     // pin 2 and 15 alternate function 1 = uart
     gpioa.AFRL.modify(.{ .AFRL2 = 1 });

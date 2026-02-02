@@ -8,9 +8,10 @@ const Gpio = @import("gpio.zig");
 const uart = @import("uart.zig");
 const i2c = @import("i2c.zig");
 const LCD = @import("lcd_i2c.zig");
-const adc = @import("adc.zig");
+const Adc = @import("adc.zig");
 
 const led: Gpio = .{ .gpio = chip.peripherals.GPIOB, .pin = 3 };
+const adc_pin: Gpio = .{ .gpio = chip.peripherals.GPIOA, .pin = 0 };
 
 export fn hardFault_Handler() callconv(.c) noreturn {
     while (true) {
@@ -25,11 +26,11 @@ export const sysTick_Handler = systick.sysTick_Handler;
 export const usart1_irq_handler = uart.usart1_irq_handler;
 export const usart2_irq_handler = uart.usart2_irq_handler;
 
-const IRC_FREQ = 8000000;
+const IRC_FREQ = config.IRC_FREQ;
 
 pub fn main() !void {
     systick.init(IRC_FREQ / 1000);
-    led.init_output_mode();
+    led.init_mode(.output);
     var uart_vcom = uart.init_vcom_uart(115200, IRC_FREQ);
     uart_vcom.registerUartInterrupt();
     var uart_vcom_reader_buffer: [512]u8 = undefined;
@@ -45,11 +46,12 @@ pub fn main() !void {
     }
     const lcd_writer = if (config.use_lcd) lcd_handle.writer() else {};
 
-    const adc1 = adc.init_adc1();
+    var adc1: Adc = .init(Adc.adc1);
+    var adc1_ch0 = adc1.channel(adc_pin);
 
     while (true) {
         led.toggle();
-        const adc_val = adc1.read();
+        const adc_val = adc1_ch0.read();
         uart_vcom_writer.interface.print("zig 0.15 ms: {} - {}\n", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
         if (config.use_lcd) {
             lcd_handle.put_cur(0, 0);

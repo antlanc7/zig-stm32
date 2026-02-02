@@ -43,8 +43,10 @@ pub fn build(b: *std.Build) void {
     b.step("asm", "emit asm output").dependOn(&install_asm_step.step);
 
     const use_lcd = b.option(bool, "lcd", "Use LCD display HD44780") orelse false;
+    const IRC_FREQ = b.option(u32, "IRC_FREQ", "Set IRC frequency") orelse 8000000;
     const options = b.addOptions();
     options.addOption(bool, "use_lcd", use_lcd);
+    options.addOption(u32, "IRC_FREQ", IRC_FREQ);
     elf.root_module.addOptions("config", options);
 
     const bin_path = b.getInstallPath(install_bin_step.dir, install_bin_step.dest_rel_path);

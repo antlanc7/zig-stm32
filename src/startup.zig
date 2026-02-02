@@ -6,6 +6,10 @@ extern const _edata: u32;
 extern var _bss: u32;
 extern const _ebss: u32;
 
+fn panic() noreturn {
+    while (true) {}
+}
+
 export fn _start() noreturn {
     const data_size = @intFromPtr(&_edata) - @intFromPtr(&_data);
     const data_loadaddr = @as([*]const u8, @ptrCast(&_data_loadaddr))[0..data_size];
@@ -15,6 +19,6 @@ export fn _start() noreturn {
     const bss = @as([*]u8, @ptrCast(&_bss))[0..bss_size];
     @memset(bss, 0);
 
-    main() catch {};
-    unreachable;
+    main() catch panic();
+    panic();
 }
