@@ -99,7 +99,7 @@ pub fn writeFn(self: *LCD, data: []const u8) error{}!usize {
     return data.len;
 }
 
-const LCDWriter = std.io.GenericWriter(*LCD, error{}, writeFn);
-pub fn writer(self: *LCD) LCDWriter {
-    return .{ .context = self };
-}
+// const LCDWriter = std.io.GenericWriter(*LCD, error{}, writeFn);
+// pub fn writer(self: *LCD) LCDWriter {
+//     return .{ .context = self };
+// }

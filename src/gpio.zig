@@ -27,6 +27,25 @@ pub const DigitalStatus = enum(u1) {
     set = 1,
 };
 
+pub const OutputType = enum(u1) {
+    push_pull = 0,
+    open_drain = 1,
+};
+
+pub const OutputSpeed = enum(u2) {
+    low = 0,
+    medium = 1,
+    reserved = 2,
+    high = 3,
+};
+
+pub const PullUpDownMode = enum(u2) {
+    none = 0,
+    pull_up = 1,
+    pull_down = 2,
+    reserved = 3,
+};
+
 pub fn get_gpio_port_name(comptime self: Gpio) u8 {
     return switch (self.gpio) {
         GPIOA => 'A',
@@ -38,14 +57,28 @@ pub fn get_gpio_port_name(comptime self: Gpio) u8 {
 }
 
 fn get_rcc_enable_name(comptime self: Gpio) *const [6:0]u8 {
-    comptime {
-        return std.fmt.comptimePrint("IOP{c}EN", .{self.get_gpio_port_name()});
-    }
+    return std.fmt.comptimePrint("IOP{c}EN", .{self.get_gpio_port_name()});
 }
 
 pub fn init_mode(comptime self: Gpio, comptime mode: Mode) void {
     rcc.AHBENR.modify_one(get_rcc_enable_name(self), 1);
     self.gpio.MODER.modify_one(std.fmt.comptimePrint("MODER{}", .{self.pin}), @intFromEnum(mode));
+}
+
+pub fn set_output_type(comptime self: Gpio, comptime output_type: OutputType) void {
+    self.gpio.OTYPER.modify_one(std.fmt.comptimePrint("OT{}", .{self.pin}), @intFromEnum(output_type));
+}
+
+pub fn set_speed(comptime self: Gpio, comptime speed: OutputSpeed) void {
+    self.gpio.OSPEEDR.modify_one(std.fmt.comptimePrint("OSPEEDR{}", .{self.pin}), @intFromEnum(speed));
+}
+
+pub fn set_alternate_function(comptime self: Gpio, comptime alternate_function: u8) void {
+    (if (self.pin < 8) self.gpio.AFRL else self.gpio.AFRH).modify_one(std.fmt.comptimePrint("AFR{c}{d}", .{ if (self.pin < 8) 'L' else 'H', self.pin }), alternate_function);
+}
+
+pub fn set_pull_up_down_mode(comptime self: Gpio, comptime pull_up_down: PullUpDownMode) void {
+    self.gpio.PUPDR.modify_one(std.fmt.comptimePrint("PUPDR{}", .{self.pin}), @intFromEnum(pull_up_down));
 }
 
 pub fn toggle(comptime self: Gpio) void {

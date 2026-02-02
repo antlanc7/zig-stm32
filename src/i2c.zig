@@ -1,30 +1,50 @@
 const std = @import("std");
-const chip = @import("lib/STM32F042x.zig");
+const stm32 = @import("lib/STM32F042x.zig");
+const GPIO = @import("gpio.zig");
 
-const I2C = *volatile chip.types.peripherals.I2C1;
+const I2C = *volatile stm32.types.peripherals.I2C1;
 
-regs: I2C,
+const rcc = stm32.peripherals.RCC;
+
+pub const I2C1 = stm32.peripherals.I2C1;
 
 const I2C_Handle = @This();
+regs: I2C,
 
 pub fn init(comptime i2c: I2C, comptime speed: u32, comptime irc_freq: u32) I2C_Handle {
     comptime if (speed != 400000 or irc_freq != 8000000) @compileError("i2c values not supported, please use 8mhz clock and speed 4khz");
+    // enable i2c peripheral clock
+    rcc.APB1ENR.modify(.{ .I2C1EN = 1 });
     i2c.TIMINGR.modify(.{ .PRESC = 0, .SCLL = 0x9, .SCLH = 0x3, .SDADEL = 0x1, .SCLDEL = 0x3 });
     i2c.CR1.modify(.{ .PE = 1 });
     return .{ .regs = i2c };
 }
 
-pub fn write(i2c_handle: *I2C_Handle, address: u7, bytes: []const u8) void {
-    const i2c = i2c_handle.regs;
+pub fn write(self: I2C_Handle, address: u7, bytes: []const u8) void {
     const len: u8 = @truncate(bytes.len);
-    i2c.CR2.modify(.{ .SADD = @as(u8, @intCast(address)) << 1, .AUTOEND = .Automatic, .NBYTES = len, .START = 1 });
+    self.regs.CR2.modify(.{ .SADD1 = address, .AUTOEND = 1, .NBYTES = len, .START = 1 });
     for (bytes) |byte| {
-        while (i2c.ISR.read().TXE != 1) {}
-        i2c.TXDR.write_raw(byte);
+        while (self.regs.ISR.read().TXE != 1) {}
+        self.regs.TXDR.write_raw(byte);
     }
-    // while (i2c.ISR.read().TCR != 1) {}
-    while (i2c.ISR.read().TXE != 1) {}
-    i2c.CR2.write_raw(0);
+    while (self.regs.ISR.read().TXE != 1) {}
+    self.regs.CR2.write_raw(0);
+}
+
+pub fn attach_pins(self: I2C_Handle, comptime scl_name: []const u8, comptime sda_name: []const u8) void {
+    const i2c_pins = switch (self.regs) {
+        I2C1 => i2c_pinmap.I2C1,
+        else => unreachable,
+    };
+    const scl = @field(i2c_pins.scl, scl_name);
+    const sda = @field(i2c_pins.sda, sda_name);
+    inline for ([_]GPIO{ scl, sda }) |pin| {
+        pin.init_mode(.alternate);
+        pin.set_alternate_function(4);
+        pin.set_speed(.high);
+        pin.set_output_type(.open_drain);
+        pin.set_pull_up_down_mode(.pull_up);
+    }
 }
 
 pub const I2C_Device = struct {
@@ -36,23 +56,20 @@ pub const I2C_Device = struct {
     }
 };
 
-pub fn init_i2c1_pa9_pa10(comptime speed: u32, comptime irc_freq: u32) I2C_Handle {
-    const rcc = chip.peripherals.RCC;
-    const gpioa = chip.peripherals.GPIOA;
-    const i2c1 = chip.peripherals.I2C1;
-    // RCC clock for GPIOA
-    rcc.AHBENR.modify(.{ .IOPAEN = 1 });
-    // mode alternate function
-    gpioa.MODER.modify(.{ .@"MODER[9]" = .Alternate, .@"MODER[10]" = .Alternate });
-    // open drain
-    gpioa.OTYPER.modify(.{ .@"OT[9]" = .OpenDrain, .@"OT[10]" = .OpenDrain });
-    // alternate function 4 = i2c
-    gpioa.AFR[1].modify(.{ .@"AFR[1]" = 4, .@"AFR[2]" = 4 }); // AFRH = AFR[1] we need to subtract 8 from the gpio pin number -> 9 - 8 = 1
-    // very high speed mode
-    gpioa.OSPEEDR.modify(.{ .@"OSPEEDR[9]" = .VeryHighSpeed, .@"OSPEEDR[10]" = .VeryHighSpeed });
-    // enable internal pull-up (needed for i2c bus)
-    gpioa.PUPDR.modify(.{ .@"PUPDR[9]" = .PullUp, .@"PUPDR[10]" = .PullUp });
-    // enable i2c peripheral clock
-    rcc.APB1ENR.modify(.{ .I2C1EN = 1 });
-    return I2C_Handle.init(i2c1, speed, irc_freq);
-}
+pub const i2c_pinmap = struct {
+    pub const I2C1 = struct {
+        pub const scl = struct {
+            pub const PA9: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 9 };
+            pub const PA11: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 11 };
+            pub const PB6: GPIO = .{ .gpio = GPIO.GPIOB, .pin = 6 };
+            pub const PF1: GPIO = .{ .gpio = GPIO.GPIOF, .pin = 1 };
+        };
+
+        pub const sda = struct {
+            pub const PA10: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 10 };
+            pub const PA12: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 12 };
+            pub const PB7: GPIO = .{ .gpio = GPIO.GPIOB, .pin = 7 };
+            pub const PF0: GPIO = .{ .gpio = GPIO.GPIOF, .pin = 0 };
+        };
+    };
+};

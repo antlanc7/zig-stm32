@@ -4,14 +4,14 @@ const config = @import("config");
 const chip = @import("lib/STM32F042x.zig");
 
 const systick = @import("systick.zig");
-const Gpio = @import("gpio.zig");
+const GPIO = @import("gpio.zig");
 const uart = @import("uart.zig");
 const i2c = @import("i2c.zig");
 const LCD = @import("lcd_i2c.zig");
-const Adc = @import("adc.zig");
+const ADC = @import("adc.zig");
 
-const led: Gpio = .{ .gpio = chip.peripherals.GPIOB, .pin = 3 };
-const adc_pin: Gpio = .{ .gpio = chip.peripherals.GPIOA, .pin = 0 };
+const led: GPIO = .{ .gpio = GPIO.GPIOB, .pin = 3 };
+const adc_pin: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 0 };
 
 export fn hardFault_Handler() callconv(.c) noreturn {
     while (true) {
@@ -39,14 +39,15 @@ pub fn main() !void {
     var uart_vcom_writer = uart_vcom.writer(&uart_vcom_writer_buffer);
 
     var lcd_handle: LCD = undefined;
+    var lcd_writer_buffer: [512]u8 = undefined;
+    const i2c_handle: i2c = .init(i2c.I2C1, 400000, IRC_FREQ);
+    i2c_handle.attach_pins("PA9", "PA10");
     if (config.use_lcd) {
-        const i2c_handle = i2c.init_i2c1_pa9_pa10(400000, IRC_FREQ);
         lcd_handle = .{ .i2c = .{ .i2c = i2c_handle, .address = 0x27 } };
         lcd_handle.init();
     }
-    const lcd_writer = if (config.use_lcd) lcd_handle.writer() else {};
 
-    var adc1: Adc = .init(Adc.adc1);
+    var adc1: ADC = .init(ADC.adc1);
     var adc1_ch0 = adc1.channel(adc_pin);
 
     while (true) {
@@ -55,7 +56,8 @@ pub fn main() !void {
         uart_vcom_writer.interface.print("zig 0.15 ms: {} - {}\n", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
         if (config.use_lcd) {
             lcd_handle.put_cur(0, 0);
-            lcd_writer.print("zig {}-{}", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
+            const lcd_msg = std.fmt.bufPrint(&lcd_writer_buffer, "zig {}-{}", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
+            _ = try lcd_handle.writeFn(lcd_msg);
         }
         const receivedBeforeTrim = uart_vcom_reader.interface.takeDelimiterInclusive('\n') catch |err| switch (err) {
             error.ReadFailed => switch (uart_vcom_reader.err.?) {
@@ -69,7 +71,7 @@ pub fn main() !void {
             uart_vcom_writer.interface.print("received: {s} = {any}\r\n", .{ received, received }) catch unreachable;
             if (config.use_lcd) {
                 lcd_handle.put_cur(1, 0);
-                lcd_writer.print("R: {s}", .{received}) catch unreachable;
+                _ = try lcd_handle.writeFn(received);
             }
         }
         uart_vcom_writer.interface.flush() catch {
