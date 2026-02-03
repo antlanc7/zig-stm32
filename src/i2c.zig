@@ -31,13 +31,18 @@ pub fn write(self: I2C_Handle, address: u7, bytes: []const u8) void {
     self.regs.CR2.write_raw(0);
 }
 
-pub fn attach_pins(self: I2C_Handle, comptime scl_name: []const u8, comptime sda_name: []const u8) void {
+pub fn attach_pins(self: I2C_Handle, comptime scl: GPIO, comptime sda: GPIO) void {
     const i2c_pins = switch (self.regs) {
         I2C1 => i2c_pinmap.I2C1,
         else => unreachable,
     };
-    const scl = @field(i2c_pins.scl, scl_name);
-    const sda = @field(i2c_pins.sda, sda_name);
+    inline for (i2c_pins.scl.pins) |pin| {
+        if (pin.gpio == scl.gpio and pin.pin == scl.pin) break;
+    } else @compileError("Invalid SCL pin");
+    inline for (i2c_pins.sda.pins) |pin| {
+        if (pin.gpio == sda.gpio and pin.pin == sda.pin) break;
+    } else @compileError("Invalid SDA pin");
+
     inline for ([_]GPIO{ scl, sda }) |pin| {
         pin.init_mode(.alternate);
         pin.set_alternate_function(4);
@@ -63,6 +68,8 @@ pub const i2c_pinmap = struct {
             pub const PA11: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 11 };
             pub const PB6: GPIO = .{ .gpio = GPIO.GPIOB, .pin = 6 };
             pub const PF1: GPIO = .{ .gpio = GPIO.GPIOF, .pin = 1 };
+
+            pub const pins = [_]GPIO{ PA9, PA11, PB6, PF1 };
         };
 
         pub const sda = struct {
@@ -70,6 +77,8 @@ pub const i2c_pinmap = struct {
             pub const PA12: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 12 };
             pub const PB7: GPIO = .{ .gpio = GPIO.GPIOB, .pin = 7 };
             pub const PF0: GPIO = .{ .gpio = GPIO.GPIOF, .pin = 0 };
+
+            pub const pins = [_]GPIO{ PA10, PA12, PB7, PF0 };
         };
     };
 };

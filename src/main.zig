@@ -12,6 +12,8 @@ const ADC = @import("adc.zig");
 
 const led: GPIO = .{ .gpio = GPIO.GPIOB, .pin = 3 };
 const adc_pin: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 0 };
+const lcd_sda_pin: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 10 };
+const lcd_scl_pin: GPIO = .{ .gpio = GPIO.GPIOA, .pin = 9 };
 
 export fn hardFault_Handler() callconv(.c) noreturn {
     while (true) {
@@ -38,12 +40,12 @@ pub fn main() !void {
     var uart_vcom_reader = uart_vcom.reader(&uart_vcom_reader_buffer);
     var uart_vcom_writer = uart_vcom.writer(&uart_vcom_writer_buffer);
 
-    var lcd_handle: LCD = undefined;
-    var lcd_writer_buffer: [512]u8 = undefined;
+    var lcd_writer_buffer: [32]u8 = undefined;
     const i2c_handle: i2c = .init(i2c.I2C1, 400000, IRC_FREQ);
-    i2c_handle.attach_pins("PA9", "PA10");
+    i2c_handle.attach_pins(lcd_scl_pin, lcd_sda_pin);
+    var lcd_handle: LCD = .{ .i2c = .{ .i2c = i2c_handle, .address = 0x27 } };
+    var lcd_writer = lcd_handle.writer(&lcd_writer_buffer);
     if (config.use_lcd) {
-        lcd_handle = .{ .i2c = .{ .i2c = i2c_handle, .address = 0x27 } };
         lcd_handle.init();
     }
 
@@ -56,8 +58,8 @@ pub fn main() !void {
         uart_vcom_writer.interface.print("zig 0.15 ms: {} - {}\n", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
         if (config.use_lcd) {
             lcd_handle.put_cur(0, 0);
-            const lcd_msg = std.fmt.bufPrint(&lcd_writer_buffer, "zig {}-{}", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
-            _ = try lcd_handle.writeFn(lcd_msg);
+            lcd_writer.interface.print("zig {}-{}", .{ systick.getTicks() / 1000, adc_val }) catch unreachable;
+            lcd_writer.interface.flush() catch unreachable;
         }
         const receivedBeforeTrim = uart_vcom_reader.interface.takeDelimiterInclusive('\n') catch |err| switch (err) {
             error.ReadFailed => switch (uart_vcom_reader.err.?) {
@@ -71,7 +73,8 @@ pub fn main() !void {
             uart_vcom_writer.interface.print("received: {s} = {any}\r\n", .{ received, received }) catch unreachable;
             if (config.use_lcd) {
                 lcd_handle.put_cur(1, 0);
-                _ = try lcd_handle.writeFn(received);
+                lcd_writer.interface.print("R: {s}", .{received}) catch unreachable;
+                lcd_writer.interface.flush() catch unreachable;
             }
         }
         uart_vcom_writer.interface.flush() catch {

@@ -1,4 +1,5 @@
 const std = @import("std");
+const Io = std.Io;
 const systick = @import("systick.zig");
 const I2C_Device = @import("i2c.zig").I2C_Device;
 
@@ -94,12 +95,38 @@ pub fn send_string_clear_rest_line(self: *LCD, str: []const u8) void {
     }
 }
 
-pub fn writeFn(self: *LCD, data: []const u8) error{}!usize {
-    self.send_string(data);
-    return data.len;
+fn drain(w: *Io.Writer, data: []const []const u8, splat: usize) Io.Writer.Error!usize {
+    const lcdWriter: *Writer = @alignCast(@fieldParentPtr("interface", w));
+    const self = lcdWriter.lcd;
+    self.send_string(w.buffered());
+    w.end = 0;
+    var written: usize = 0;
+    for (data[0 .. data.len - 1]) |bytes| {
+        self.send_string(bytes);
+        written += bytes.len;
+    }
+    for (0..splat) |_| {
+        const bytes = data[data.len - 1];
+        self.send_string(bytes);
+        written += bytes.len;
+    }
+    return written;
 }
 
-// const LCDWriter = std.io.GenericWriter(*LCD, error{}, writeFn);
-// pub fn writer(self: *LCD) LCDWriter {
-//     return .{ .context = self };
-// }
+pub const Writer = struct {
+    lcd: *LCD,
+    interface: Io.Writer,
+};
+
+pub fn writer(lcd: *LCD, buffer: []u8) Writer {
+    return .{
+        .lcd = lcd,
+        .interface = .{
+            .buffer = buffer,
+            .end = 0,
+            .vtable = &.{
+                .drain = drain,
+            },
+        },
+    };
+}
