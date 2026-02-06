@@ -12,8 +12,10 @@ pub fn build(b: *std.Build) void {
         .abi = .eabi,
     });
 
+    const name = "main";
+
     const elf = b.addExecutable(.{
-        .name = "main",
+        .name = name ++ ".elf",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/startup.zig"),
             .target = target,
@@ -33,12 +35,12 @@ pub fn build(b: *std.Build) void {
     const bin_step = elf.addObjCopy(.{ .format = .bin });
     bin_step.step.dependOn(&install_elf_step.step);
 
-    const install_bin_step = b.addInstallBinFile(bin_step.getOutput(), "main.bin");
+    const install_bin_step = b.addInstallBinFile(bin_step.getOutput(), name ++ ".bin");
     install_bin_step.step.dependOn(&bin_step.step);
     b.default_step.dependOn(&install_bin_step.step);
 
     // add a CLI step to enable asm output: asm
-    const install_asm_step = b.addInstallFile(elf.getEmittedAsm(), "bin/main.s");
+    const install_asm_step = b.addInstallFile(elf.getEmittedAsm(), "bin/" ++ name ++ ".s");
     install_asm_step.step.dependOn(&install_elf_step.step);
     b.step("asm", "emit asm output").dependOn(&install_asm_step.step);
 
