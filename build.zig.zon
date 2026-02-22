@@ -2,7 +2,7 @@
     .name = .zig_stm32,
     .version = "0.0.1",
     .fingerprint = 0xd975ef2b0aeb2afb,
-    .minimum_zig_version = "0.16.0-dev.2368",
+    .minimum_zig_version = "0.16.0-dev.2637+6a9510c0e",
     .paths = .{
         "build.zig",
         "build.zig.zon",
